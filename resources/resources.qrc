@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Book.svg</file>
+        <file>more_horiz.svg</file>
+        <file>person.svg</file>
+        <file>delete.svg</file>
+        <file>Component 1.svg</file>
+        <file>add.svg</file>
+        <file>Save.svg</file>
+        <file>edit.svg</file>
+    </qresource>
+</RCC>
