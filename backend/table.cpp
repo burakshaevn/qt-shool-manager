@@ -377,16 +377,22 @@ void Table::EditRecord() {
         QStringList setClauses;
         QString whereClause;
 
+        // Формирование SET (новые значения)
+        for (int col = 0; col < updatedRecord.count(); ++col) {
+            QString fieldName = updatedRecord.fieldName(col);
+            QString newValue = updatedRecord.value(col).toString();
+            setClauses.append(QString("%1 = '%2'").arg(fieldName, newValue));
+        }
+
+        // Формирование WHERE (по всем данным строки)
         for (int col = 0; col < record.count(); ++col) {
             QString fieldName = record.fieldName(col);
-            QString newValue = updatedRecord.value(col).toString();
+            QString oldValue = record.value(col).toString();
 
-            setClauses.append(QString("%1 = '%2'").arg(fieldName, newValue));
-
-            if (col == 0) { // Условие WHERE берём по первому столбцу (можно настроить)
-                QString oldValue = record.value(col).toString();
-                whereClause = QString("%1 = '%2'").arg(fieldName, oldValue);
+            if (!whereClause.isEmpty()) {
+                whereClause += " AND ";
             }
+            whereClause += QString("%1 = '%2'").arg(fieldName, oldValue);
         }
 
         if (whereClause.isEmpty()) {
@@ -408,10 +414,6 @@ void Table::EditRecord() {
         QMessageBox::information(this, "Success", "Record updated successfully.");
     }
 }
-
-// void Table::SetParent(QWidget* parent){
-//     QWidget(parent);
-// }
 
 QString Table::GetPrimaryKeyColumnName(const QString& table_name) {
     QSqlQuery query;

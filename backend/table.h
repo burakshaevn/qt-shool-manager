@@ -50,8 +50,6 @@ public:
     void DeleteRecord();
     void EditRecord();
 
-    // void SetParent(QWidget* parent);
-
     QString GetPrimaryKeyColumnName(const QString& table_name);
 
     bool GetConfirmation(const QString& table_name, const QString& primary_key_column, int id);
