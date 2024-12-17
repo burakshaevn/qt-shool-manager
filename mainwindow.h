@@ -24,13 +24,8 @@ public:
 
     void UpdateUser(const UserInfo& user, QWidget* parent);
 
-    // void SetupTable();
-    // void LoadTable(const QString& table_name);
-    // void SetupActions(const QString& table_name, QSqlTableModel* model);
-
 private slots:
     void on_pushButton_login_clicked();
-
     void on_logout_clicked();
 
 private:

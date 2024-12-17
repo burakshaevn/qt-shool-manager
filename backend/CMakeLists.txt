@@ -15,7 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Sql)
 add_library(backend
 
   database_manager.h database_manager.cpp
-  user.h user.cpp
+  user.h
   table.h table.cpp
   domain.h
   edit_dialog.h edit_dialog.cpp
