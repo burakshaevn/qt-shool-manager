@@ -189,8 +189,13 @@ void Table::AddRecord() {
     // Открываем диалог EditDialog для ввода данных
     EditDialog dialog(newRecord, this);
     if (dialog.exec() == QDialog::Accepted) {
-        // Получаем обновлённую запись из диалога
-        QSqlRecord updatedRecord = dialog.GetUpdatedRecord();
+        QSqlRecord updatedRecord;
+        try {
+            updatedRecord = dialog.GetUpdatedRecord();
+        } catch (const std::runtime_error& e) {
+            QMessageBox::critical(this, "Input Error", e.what());
+            return;
+        }
 
         // Формируем SQL-запрос для вставки данных
         QStringList fieldNames, fieldValues;
