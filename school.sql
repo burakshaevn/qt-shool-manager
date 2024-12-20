@@ -5,7 +5,7 @@
 -- Dumped from database version 17.2
 -- Dumped by pg_dump version 17.2
 
--- Started on 2024-12-17 10:47:21
+-- Started on 2024-12-20 22:18:44
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -29,9 +29,10 @@ CREATE FUNCTION public.set_room_to_default_before_delete() RETURNS trigger
     AS $$
 BEGIN
     -- Обновляем room_number в таблице schedule на '0'
-    UPDATE schedule
-    SET room_number = NULL
-    WHERE room_number = OLD.room_number;
+    --UPDATE schedule
+    --SET room_number = '0'
+    --WHERE room_number = OLD.room_number;
+	DELETE FROM public.schedule WHERE room_number = OLD.room_number;
     RETURN OLD;
 END;
 $$;
@@ -232,7 +233,7 @@ ALTER TABLE public.schedule OWNER TO postgres;
 -- Name: TABLE schedule; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.schedule IS 'Таблица расписания. Включает день недели, ссылку на класс, номер урока, ссылку на кабинет и предмет. Поля class_name и subject_name связаны с таблицей Subjects для определения, какие предметы проходят в каком классе. Поле room_number связано с таблицей Rooms, чтобы указать кабинет, в котором проводится урок. Используются внешние ключи для сохранения ссылочной целостности: если удаляется запись в таблице Subjects, соответствующие строки в расписании удаляются, а при удалении кабинета значение в поле room_number заменяется на NULL.';
+COMMENT ON TABLE public.schedule IS 'Таблица расписания. Включает день недели, номер урока, предмет, порядковый номер записи и номер кабинета, где проводится занятие.';
 
 
 --
@@ -281,7 +282,7 @@ ALTER TABLE public.students OWNER TO postgres;
 -- Name: TABLE students; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.students IS 'Таблица студентов. В ней представлены имя, фамилия и класс, в котором обучается студент.';
+COMMENT ON TABLE public.students IS 'Таблица студентов. В ней представлены порядковый номер записи, имя, фамилия и класс, в котором обучается студент.';
 
 
 --
@@ -330,7 +331,7 @@ ALTER TABLE public.subjects OWNER TO postgres;
 -- Name: TABLE subjects; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.subjects IS 'Таблица предметов. В ней представлены название класса, название предмета и ссылка на учителя, который преподаёт предмет.';
+COMMENT ON TABLE public.subjects IS 'Таблица предметов. В ней представлены название класса, название предмета, ссылка на учителя, который преподаёт предмет и порядковый номер записи.';
 
 
 --
@@ -471,11 +472,9 @@ ALTER TABLE ONLY public.teachers ALTER COLUMN id SET DEFAULT nextval('public.tea
 -- Data for Name: classes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.classes VALUES ('11B', 28, 2, 2);
-INSERT INTO public.classes VALUES ('9C', 25, 3, 3);
 INSERT INTO public.classes VALUES ('10Б', 10, 5, 5);
-INSERT INTO public.classes VALUES ('E32', 33, NULL, 4);
-INSERT INTO public.classes VALUES ('10А', 30, NULL, 1);
+INSERT INTO public.classes VALUES ('11А', 25, 10, 6);
+INSERT INTO public.classes VALUES ('9Г', 15, 3, 3);
 
 
 --
@@ -487,8 +486,9 @@ INSERT INTO public.classes VALUES ('10А', 30, NULL, 1);
 INSERT INTO public.lessons VALUES (3, '10:00:00', '10:45:00', 3);
 INSERT INTO public.lessons VALUES (4, '11:00:00', '11:45:00', 4);
 INSERT INTO public.lessons VALUES (5, '12:00:00', '12:45:00', 5);
-INSERT INTO public.lessons VALUES (6, '13:00:00', '13:45:00', 6);
 INSERT INTO public.lessons VALUES (2, '09:00:00', '09:45:00', 2);
+INSERT INTO public.lessons VALUES (6, '13:00:00', '13:45:00', 6);
+INSERT INTO public.lessons VALUES (1, '08:00:00', '08:45:00', 7);
 
 
 --
@@ -497,8 +497,8 @@ INSERT INTO public.lessons VALUES (2, '09:00:00', '09:45:00', 2);
 -- Data for Name: rooms; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.rooms VALUES ('102', 'Физика', 2, 2);
 INSERT INTO public.rooms VALUES ('103', 'Русский язык', 3, 3);
+INSERT INTO public.rooms VALUES ('102', 'Физика', 2, 2);
 
 
 --
@@ -507,9 +507,8 @@ INSERT INTO public.rooms VALUES ('103', 'Русский язык', 3, 3);
 -- Data for Name: schedule; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.schedule VALUES ('Понедельник', 1, 'Математика', 9, NULL);
-INSERT INTO public.schedule VALUES ('Пятница', 5, 'Химия', 8, '103');
 INSERT INTO public.schedule VALUES ('Вторник', 4, 'Химия', 4, '103');
+INSERT INTO public.schedule VALUES ('Пятница', 5, 'Химия', 8, '103');
 
 
 --
@@ -518,11 +517,31 @@ INSERT INTO public.schedule VALUES ('Вторник', 4, 'Химия', 4, '103')
 -- Data for Name: students; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.students VALUES (3, 'Петр', 'Сидоров', '11B');
-INSERT INTO public.students VALUES (4, 'Анна', 'Кузнецова', '9C');
-INSERT INTO public.students VALUES (2, 'Мария', 'Смирнова', '10А');
-INSERT INTO public.students VALUES (5, 'Олег', 'Елекеев', '10А');
-INSERT INTO public.students VALUES (6, 'Чингиз', 'Шамсутдинов', '10А');
+INSERT INTO public.students VALUES (5, 'Иван', 'Боздунов', '11А');
+INSERT INTO public.students VALUES (6, 'Ильдар', 'Попов', '11А');
+INSERT INTO public.students VALUES (9, 'Раиль', 'Гараев', '11А');
+INSERT INTO public.students VALUES (10, 'Артём', 'Скутырлов', '11А');
+INSERT INTO public.students VALUES (11, 'Виталий', 'Норох', '11А');
+INSERT INTO public.students VALUES (12, 'Дмитрий', 'Мещанов', '11А');
+INSERT INTO public.students VALUES (13, 'Айлита', 'Шарипова', '11А');
+INSERT INTO public.students VALUES (14, 'Дарья', 'Ушакова', '11А');
+INSERT INTO public.students VALUES (15, 'Инна', 'Громова', '11А');
+INSERT INTO public.students VALUES (16, 'Дарина', 'Фёдорова', '11А');
+INSERT INTO public.students VALUES (17, 'Римма', 'Клементьева', '11А');
+INSERT INTO public.students VALUES (18, 'Дарья', 'Фаустова', '11А');
+INSERT INTO public.students VALUES (19, 'Алина', 'Ямалтдинова', '11А');
+INSERT INTO public.students VALUES (8, 'Константин', 'Андреев', '9Г');
+INSERT INTO public.students VALUES (7, 'Артур', 'Газизов', '9Г');
+INSERT INTO public.students VALUES (20, 'Даниил', 'Летяев', '9Г');
+INSERT INTO public.students VALUES (21, 'Артём', 'Закон', '9Г');
+INSERT INTO public.students VALUES (22, 'Тимур', 'Гусев', '9Г');
+INSERT INTO public.students VALUES (23, 'Александр', 'Кудряшов', '9Г');
+INSERT INTO public.students VALUES (24, 'Чингис', 'Шамсутдинов', '9Г');
+INSERT INTO public.students VALUES (4, 'Алина', 'Миннибаева', '9Г');
+INSERT INTO public.students VALUES (25, 'Анна', 'Ибряева', '11А');
+INSERT INTO public.students VALUES (26, 'Диана', 'Хусаинова', '11А');
+INSERT INTO public.students VALUES (27, 'Диана', 'Шароян', '11А');
+INSERT INTO public.students VALUES (28, 'Дарина', 'Зотова', '11А');
 
 
 --
@@ -531,9 +550,8 @@ INSERT INTO public.students VALUES (6, 'Чингиз', 'Шамсутдинов',
 -- Data for Name: subjects; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.subjects VALUES ('11B', 'Русский язык', 3, 3);
-INSERT INTO public.subjects VALUES ('9C', 'Физика', 2, 6);
-INSERT INTO public.subjects VALUES ('10А', 'Физика', NULL, 2);
+INSERT INTO public.subjects VALUES ('9Г', 'Русский язык', 7, 7);
+INSERT INTO public.subjects VALUES ('9Г', 'Физика', 2, 6);
 
 
 --
@@ -544,10 +562,12 @@ INSERT INTO public.subjects VALUES ('10А', 'Физика', NULL, 2);
 
 INSERT INTO public.teachers VALUES (2, 'Сергей', 'Иванов', 'Физика', 'ivanov.sergey@school.com', 'password2');
 INSERT INTO public.teachers VALUES (3, 'Елена', 'Соколова', 'Русский язык', 'sokolova.elena@school.com', 'password3');
-INSERT INTO public.teachers VALUES (7, 'Иван', 'Иванов', 'Математика', 'test12@mail.com', 'test12');
 INSERT INTO public.teachers VALUES (5, 'Никита', 'Компилятор', 'Математика и информатика', 'nikita.compilator@icloud.com', 'hello_world_123');
 INSERT INTO public.teachers VALUES (6, 'Светлана', 'Клюева', 'Директор', 'svetlana.klueva@mail.com', 'admin');
-INSERT INTO public.teachers VALUES (8, 'Татьяна', 'Краснова', 'Физика', 'tatyana.krasnova@mail.ru', 'tatyana_krasnova123');
+INSERT INTO public.teachers VALUES (7, 'Иван', 'Иванов', 'Математика', '453re3wko@mail.xaz', 'test12');
+INSERT INTO public.teachers VALUES (8, 'Артур', 'Галиуллиин', 'Физкультура', 'artur.galiullin@boxing.com', 'op45gk342');
+INSERT INTO public.teachers VALUES (9, 'Егор', 'Жупиков', 'Физкультура', 'egor.zhupikov@boxing.com', '%$R^tguyh4393');
+INSERT INTO public.teachers VALUES (10, 'Татьяна', 'Краснова', 'Физика', 'tatyana.krasnova@mail.ru', '643yi@(*jr');
 
 
 --
@@ -693,21 +713,21 @@ CREATE TRIGGER update_teacher_id AFTER UPDATE OF teacher_id ON public.classes FO
 
 
 --
--- TOC entry 4765 (class 2606 OID 25033)
+-- TOC entry 4765 (class 2606 OID 25434)
 -- Name: classes classes_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.classes
-    ADD CONSTRAINT classes_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id) ON DELETE SET NULL;
+    ADD CONSTRAINT classes_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id) ON DELETE CASCADE;
 
 
 --
--- TOC entry 4767 (class 2606 OID 25055)
+-- TOC entry 4767 (class 2606 OID 25439)
 -- Name: rooms rooms_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.rooms
-    ADD CONSTRAINT rooms_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id) ON DELETE SET NULL;
+    ADD CONSTRAINT rooms_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id) ON DELETE CASCADE;
 
 
 --
@@ -738,7 +758,7 @@ ALTER TABLE ONLY public.subjects
 
 
 --
--- TOC entry 4769 (class 2606 OID 25070)
+-- TOC entry 4769 (class 2606 OID 25444)
 -- Name: subjects subjects_teacher_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -746,7 +766,7 @@ ALTER TABLE ONLY public.subjects
     ADD CONSTRAINT subjects_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id) ON DELETE CASCADE;
 
 
--- Completed on 2024-12-17 10:47:21
+-- Completed on 2024-12-20 22:18:44
 
 --
 -- PostgreSQL database dump complete

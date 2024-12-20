@@ -12,6 +12,8 @@
 #include <QHBoxLayout>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 class EditDialog : public QDialog {
     Q_OBJECT

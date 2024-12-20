@@ -186,42 +186,41 @@ void Table::AddRecord() {
         newRecord.append(field);
     }
 
-    // Открываем диалог EditDialog для ввода данных
-    EditDialog dialog(newRecord, this);
-    if (dialog.exec() == QDialog::Accepted) {
-        QSqlRecord updatedRecord;
-        try {
+    try{
+        // Открываем диалог EditDialog для ввода данных
+        EditDialog dialog(newRecord, this);
+        if (dialog.exec() == QDialog::Accepted) {
+            QSqlRecord updatedRecord;
             updatedRecord = dialog.GetUpdatedRecord();
-        } catch (const std::runtime_error& e) {
-            QMessageBox::critical(this, "Input Error", e.what());
-            return;
+
+            // Формируем SQL-запрос для вставки данных
+            QStringList fieldNames, fieldValues;
+            for (int col = 0; col < updatedRecord.count(); ++col) {
+                QString fieldName = updatedRecord.fieldName(col);
+                QString fieldValue = updatedRecord.value(col).toString();
+
+                fieldNames.append(fieldName);
+                fieldValues.append("'" + fieldValue + "'");
+            }
+
+            QString insertQuery = QString("INSERT INTO %1 (%2) VALUES (%3)")
+                                      .arg(tableName)
+                                      .arg(fieldNames.join(", "))
+                                      .arg(fieldValues.join(", "));
+
+            // Выполняем запрос
+            QSqlQuery query;
+            if (!query.exec(insertQuery)) {
+                throw std::runtime_error(query.lastError().text().toStdString());
+            }
+
+            // Перезагружаем таблицу
+            LoadTable();
+            QMessageBox::information(this, "Success", "Record added successfully.");
         }
-
-        // Формируем SQL-запрос для вставки данных
-        QStringList fieldNames, fieldValues;
-        for (int col = 0; col < updatedRecord.count(); ++col) {
-            QString fieldName = updatedRecord.fieldName(col);
-            QString fieldValue = updatedRecord.value(col).toString();
-
-            fieldNames.append(fieldName);
-            fieldValues.append("'" + fieldValue + "'");
-        }
-
-        QString insertQuery = QString("INSERT INTO %1 (%2) VALUES (%3)")
-                                  .arg(tableName)
-                                  .arg(fieldNames.join(", "))
-                                  .arg(fieldValues.join(", "));
-
-        // Выполняем запрос
-        QSqlQuery query;
-        if (!query.exec(insertQuery)) {
-            QMessageBox::critical(this, "SQL Error", "Failed to execute query: " + query.lastError().text());
-            return;
-        }
-
-        // Перезагружаем таблицу
-        LoadTable();
-        QMessageBox::information(this, "Success", "Record added successfully.");
+    }
+    catch (const std::exception& e){
+        QMessageBox::critical(this, "Error", e.what());
     }
 }
 
@@ -371,52 +370,55 @@ void Table::EditRecord() {
         record.setValue(col, value);
     }
 
-    // Открываем диалог для редактирования
-    EditDialog dialog(record, this);
-    if (dialog.exec() == QDialog::Accepted) {
-        // Получаем обновлённую запись
-        QSqlRecord updatedRecord = dialog.GetUpdatedRecord();
+    try{
+        // Открываем диалог для редактирования
+        EditDialog dialog(record, this);
+        if (dialog.exec() == QDialog::Accepted) {
+            // Получаем обновлённую запись
+            QSqlRecord updatedRecord = dialog.GetUpdatedRecord();
 
-        // Формируем SQL-запрос для обновления строки
-        QString tableName = table_selector_->currentText();
-        QStringList setClauses;
-        QString whereClause;
+            // Формируем SQL-запрос для обновления строки
+            QString tableName = table_selector_->currentText();
+            QStringList setClauses;
+            QString whereClause;
 
-        // Формирование SET (новые значения)
-        for (int col = 0; col < updatedRecord.count(); ++col) {
-            QString fieldName = updatedRecord.fieldName(col);
-            QString newValue = updatedRecord.value(col).toString();
-            setClauses.append(QString("%1 = '%2'").arg(fieldName, newValue));
-        }
-
-        // Формирование WHERE (по всем данным строки)
-        for (int col = 0; col < record.count(); ++col) {
-            QString fieldName = record.fieldName(col);
-            QString oldValue = record.value(col).toString();
-
-            if (!whereClause.isEmpty()) {
-                whereClause += " AND ";
+            // Формирование SET (новые значения)
+            for (int col = 0; col < updatedRecord.count(); ++col) {
+                QString fieldName = updatedRecord.fieldName(col);
+                QString newValue = updatedRecord.value(col).toString();
+                setClauses.append(QString("%1 = '%2'").arg(fieldName, newValue));
             }
-            whereClause += QString("%1 = '%2'").arg(fieldName, oldValue);
+
+            // Формирование WHERE (по всем данным строки)
+            for (int col = 0; col < record.count(); ++col) {
+                QString fieldName = record.fieldName(col);
+                QString oldValue = record.value(col).toString();
+
+                if (!whereClause.isEmpty()) {
+                    whereClause += " AND ";
+                }
+                whereClause += QString("%1 = '%2'").arg(fieldName, oldValue);
+            }
+
+            if (whereClause.isEmpty()) {
+                throw std::runtime_error("Cannot determine the row for update.");
+            }
+
+            QString updateQuery = QString("UPDATE %1 SET %2 WHERE %3")
+                                      .arg(tableName, setClauses.join(", "), whereClause);
+
+            // Выполняем запрос
+            QSqlQuery query;
+            if (!query.exec(updateQuery)) {
+                throw std::runtime_error(query.lastError().text().toStdString());
+            }
+
+            LoadTable();
+            QMessageBox::information(this, "Success", "Record updated successfully.");
         }
-
-        if (whereClause.isEmpty()) {
-            QMessageBox::critical(this, "Error", "Cannot determine the row for update.");
-            return;
-        }
-
-        QString updateQuery = QString("UPDATE %1 SET %2 WHERE %3")
-                                  .arg(tableName, setClauses.join(", "), whereClause);
-
-        // Выполняем запрос
-        QSqlQuery query;
-        if (!query.exec(updateQuery)) {
-            QMessageBox::critical(this, "SQL Error", "Failed to execute query: " + query.lastError().text());
-            return;
-        }
-
-        LoadTable();
-        QMessageBox::information(this, "Success", "Record updated successfully.");
+    }
+    catch(const std::exception& e) {
+        QMessageBox::critical(this, "Error", e.what());
     }
 }
 
